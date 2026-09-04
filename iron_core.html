@@ -1141,7 +1141,7 @@ function ExerciseDetailModal({exercise,onClose}){
   <div style={{margin:"10px 0 20px", display:"flex", justifyContent:"center"}}>
     <div style={{width:"100%", maxWidth:320, height:220, borderRadius:14, border:"1px solid var(--border)", background:"var(--bg-elev-2)", display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden"}}>
       {exercise.imageUrl ? (
-        <img src={exercise.imageUrl} alt={exercise.name} style={{width:"100%", height:"100%", objectFit:"contain"}} />
+        <img src={exercise.imageUrl + (exercise.imageUrl.includes("?") ? "&" : "?") + "v=" + Date.now()} alt={exercise.name} style={{width:"100%", height:"100%", objectFit:"contain"}} />
       ) : (
         <span style={{fontSize:44}}>🏋️‍♂️</span>
       )}
