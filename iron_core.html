@@ -1289,8 +1289,8 @@ function HistoryTab({history,onDeleteHistory}){
 
 function App(){
  const [booted,setBooted]=useState(false);
- const [exercises,setExercises]=useState(()=>loadKey("il_exs_v2", DEFAULT_EXERCISES));
- const [routines,setRoutines]=useState(()=>loadKey("il_rts_v2",seedRoutines(DEFAULT_EXERCISES)));
+ const [exercises,setExercises]=useState(()=>loadKey("il_exs_v3", DEFAULT_EXERCISES));
+ const [routines,setRoutines]=useState(()=>loadKey("il_rts_v3",seedRoutines(DEFAULT_EXERCISES)));
  const [history,setHistory]=useState(()=>loadKey("il_hist",[]));
  const [bodyweight,setBodyweight]=useState(()=>loadKey("il_bw",[]));
  const [tab,setTab]=useState("log");
@@ -1311,8 +1311,8 @@ function App(){
  const [confirmModalConfig, setConfirmModalConfig] = useState(null);
 
  useEffect(()=>{setBooted(true)},[]);
- useEffect(()=>{saveKey("il_exs_v2",exercises)},[exercises]);
- useEffect(()=>{saveKey("il_rts_v2",routines)},[routines]);
+ useEffect(()=>{saveKey("il_exs_v3",exercises)},[exercises]);
+ useEffect(()=>{saveKey("il_rts_v3",routines)},[routines]);
  useEffect(()=>{saveKey("il_hist",history)},[history]);
  useEffect(()=>{saveKey("il_bw",bodyweight)},[bodyweight]);
  useEffect(()=>{saveKey("il_active",activeWorkout)},[activeWorkout]);
