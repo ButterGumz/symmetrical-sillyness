@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#14140F">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Iron Core</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/prop-types/prop-types.min.js"></script>
+  <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+    :root {
+      --bg:#14140F; --bg-elev:#1F1E18; --bg-elev-2:#262419;
+      --text:#FAF7EE; --text-dim:#A39C8A; --accent:#E8B923;
+      --accent-dim:#8A6C16; --record:#C1443C; --border:#33311F;
+    }
+    * { box-sizing:border-box; }
+    html,body,#root { margin:0; min-height:100%; background:var(--bg); font-size: 18px; }
+    body { overscroll-behavior:none; }
+    button,input,select { -webkit-tap-highlight-color:transparent; }
+    button { font:inherit; }
+    .app-shell { font-family:Inter,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; min-height:100dvh; max-width:480px; margin:0 auto; display:flex; flex-direction:column; position:relative; }
+    .boot-screen { height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; color:var(--text-dim); }
+    .boot-icon { color:var(--accent); animation:pulse 1.4s ease-in-out infinite; }
+    @keyframes pulse {0%,100%{opacity:.4}50%{opacity:1}}
+    .app-header { border-bottom:1px solid var(--border); background:var(--bg); position:sticky; top:0; z-index:5; }
+    .app-header-inner { display:flex; align-items:center; gap:12px; padding:20px 22px; }
+    .header-icon { color:var(--accent); }
+    .app-title { font-family:Oswald,sans-serif; font-weight:700; font-size:25px; letter-spacing:3px; }
+    .content { flex:1; padding:22px 20px 120px; overflow-y:auto; }
+    .bottom-nav { position:fixed; left:50%; transform:translateX(-50%); bottom:0; width:min(480px,100%); display:flex; border-top:1px solid var(--border); background:var(--bg-elev); padding:10px 8px calc(10px + env(safe-area-inset-bottom)); z-index:5; }
+    .nav-btn { flex:1; background:none; border:none; color:var(--text-dim); display:flex; flex-direction:column; align-items:center; gap:5px; font-size:13px; padding:9px 2px; cursor:pointer; border-radius:12px; }
+    .nav-btn-active { color:var(--accent); }
+    .nav-btn:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+    .section-title-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+    .section-title { font-family:Oswald,sans-serif; text-transform:uppercase; letter-spacing:2px; font-size:22px; font-weight:600; margin:0; }
+    .empty-state { display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; color:var(--text-dim); padding:44px 22px; border:1px dashed var(--border); border-radius:16px; }
+    .empty-title { color:var(--text); font-weight:600; font-size:18px; margin:4px 0 0; }
+    .empty-sub { font-size:15px; margin:0; color:var(--text-dim); }
+    .card { background:var(--bg-elev); border:1px solid var(--border); border-radius:16px; padding:18px; margin-bottom:16px; }
+    .btn { font-family:Inter,sans-serif; font-weight:600; font-size:16px; border-radius:14px; border:1px solid transparent; padding:15px 20px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:10px; transition:transform .1s,opacity .15s; min-height:52px; }
+    .btn:active { transform:scale(.98); }
+    .btn:disabled { opacity:.4; cursor:not-allowed; }
+    .btn-primary { background:var(--accent); color:#14140F; }
+    .btn-ghost { background:transparent; color:var(--text); border:1px solid var(--border); }
+    .btn-danger { background:var(--record); color:var(--text); }
+    .btn-danger-ghost { background:transparent; color:var(--record); border:1px solid var(--record); }
+    .btn-sm { padding:10px 16px; font-size:14px; min-height:44px; }
+    .btn-round { border-radius:50%; width:52px; height:52px; padding:0; }
+    .full-width { width:100%; }
+    .icon-btn { background:var(--bg-elev-2); border:1px solid var(--border); color:var(--text); border-radius:12px; width:44px; height:44px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+    .icon-btn-ghost { background:transparent; border:none; color:var(--text-dim); width:36px; height:36px; }
+    .input { width:100%; background:var(--bg-elev-2); border:1px solid var(--border); color:var(--text); padding:14px 16px; border-radius:12px; font-size:17px; font-family:Inter,sans-serif; margin-bottom:14px; }
+    .input::placeholder { color:var(--text-dim); }
+    input[type="number"] { -moz-appearance:textfield; }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+    .input-mini { padding:10px 12px; margin-bottom:0; text-align:center; font-family:'IBM Plex Mono',monospace; font-size:16px; }
+    .field-label { font-size:14px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:9px; }
+    .search-row { position:relative; margin-bottom:16px; }
+    .search-input { margin-bottom:0; }
+    .chip-row { display:flex; gap:11px; overflow-x:auto; padding-bottom:8px; margin-bottom:18px; scrollbar-width:none; }
+    .chip-row::-webkit-scrollbar { display:none; }
+    .chip { flex-shrink:0; background:var(--bg-elev-2); border:1px solid var(--border); color:var(--text-dim); padding:9px 18px; border-radius:999px; font-size:14px; font-weight:500; cursor:pointer; white-space:nowrap; }
+    .chip-active { background:var(--accent); color:#14140F; border-color:var(--accent); font-weight:600; }
+    .muscle-group-label { font-family:Oswald,sans-serif; color:var(--accent); text-transform:uppercase; letter-spacing:1.5px; font-size:14px; margin:0 0 11px; }
+    .exercise-row { display:flex; align-items:center; justify-content:space-between; padding:16px 18px; }
+    .picker-row-name { font-weight:600; font-size:16px; }
+    .picker-row-sub { font-size:14px; color:var(--text-dim); margin-top:4px; }
+    .routine-grid { display:flex; flex-direction:column; gap:14px; }
+    .routine-card { position:relative; text-align:left; background:var(--bg-elev); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:14px; padding:18px 48px 18px 18px; cursor:pointer; color:var(--text); }
+    .routine-card-name { font-weight:600; font-size:17px; }
+    .routine-card-sub { font-size:14px; color:var(--text-dim); margin-top:5px; }
+    .routine-card-arrow { position:absolute; right:18px; top:50%; transform:translateY(-50%); color:var(--text-dim); }
+    .routine-list-item { display:flex; align-items:center; justify-content:space-between; gap:14px; }
+    .routine-list-main { flex:1; cursor:pointer; }
+    .routine-list-actions { display:flex; align-items:center; gap:11px; }
+    .workout-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:18px; }
+    .exercise-card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:11px; }
+    .exercise-card-name { font-family:Oswald,sans-serif; font-size:19px; letter-spacing:.5px; }
+    .set-row { display:grid; grid-template-columns:34px 1fr 20px 1fr 40px 44px; align-items:center; gap:9px; background:var(--bg-elev-2); border:1px solid var(--border); border-radius:12px; padding:11px 11px; margin-bottom:9px; transition:background .2s,border-color .2s; }
+    .set-row-done { background:rgba(232,185,35,.12); border-color:var(--accent-dim); }
+    .set-num { font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--text-dim); text-align:center; }
+    .set-input { background:var(--bg); border:1px solid var(--border); color:var(--text); border-radius:9px; padding:11px 7px; text-align:center; font-family:'IBM Plex Mono',monospace; font-size:16px; width:100%; min-width:0; }
+    .set-x { text-align:center; color:var(--text-dim); font-size:14px; }
+    .set-check { width:40px; height:40px; border-radius:9px; border:1px solid var(--border); background:transparent; color:var(--text-dim); display:flex; align-items:center; justify-content:center; cursor:pointer; }
+    .set-check-done { background:var(--accent); border-color:var(--accent); color:#14140F; }
+    .pr-flame { color:var(--record); }
+    .timer-widget { display:flex; align-items:stretch; gap:14px; background:var(--bg-elev); border:1px solid var(--border); border-radius:16px; padding:18px; margin-bottom:20px; min-height:140px; }
+    .timer-main { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:0; }
+    .timer-side { display:flex; flex-direction:column; justify-content:space-between; align-items:center; gap:11px; }
+    .timer-ring-wrap { position:relative; width:92px; height:92px; flex-shrink:0; }
+    .timer-ring-wrap svg { transform:rotate(-90deg); width:92px; height:92px; }
+    .timer-ring-bg { fill:none; stroke:var(--border); stroke-width:5; }
+    .timer-ring-fg { fill:none; stroke:var(--accent); stroke-width:5; stroke-linecap:round; transition:stroke-dashoffset 1s linear; }
+    .timer-clock { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:16px; font-weight:700; }
+    .timer-presets { display:flex; gap:7px; }
+    .timer-controls { display:flex; align-items:center; gap:9px; }
+    .timer-workout-label { font-family:'Oswald',sans-serif; color:var(--accent); font-size:13px; letter-spacing:2px; margin-bottom:5px; }
+    .timer-workout-name { max-width:190px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-dim); font-size:14px; margin-top:5px; }
+    .timer-running { border-color:var(--accent-dim); box-shadow:0 0 0 1px rgba(232,185,35,.12), 0 8px 24px rgba(0,0,0,.2); min-height:190px; }
+    .timer-running .timer-ring-wrap { width:130px; height:130px; }
+    .timer-running .timer-ring-wrap svg { width:130px; height:130px; }
+    .timer-running .timer-clock { font-size:39px; letter-spacing:-1px; }
+    .timer-running .timer-workout-label { font-size:14px; }
+    .timer-running .timer-workout-name { font-size:15px; color:var(--text); }
+    .timer-running .timer-main { justify-content:center; }
+    .timer-running .timer-side { justify-content:center; }
+    .modal-overlay { position:fixed; inset:0; background:rgba(10,10,7,.72); display:flex; align-items:flex-end; justify-content:center; z-index:20; padding:0; }
+    .modal { background:var(--bg-elev); border:1px solid var(--border); border-radius:22px 22px 0 0; width:100%; max-width:480px; max-height:88vh; overflow-y:auto; padding:22px 20px calc(22px + env(safe-area-inset-bottom)); animation:slideUp .22s ease-out; }
+    .modal-sm { border-radius:20px; margin:0 18px 18px; max-width:420px; }
+    @keyframes slideUp { from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1} }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+    .modal-title { font-family:Oswald,sans-serif; text-transform:uppercase; letter-spacing:1.5px; font-size:20px; margin:0; }
+    .modal-btn-row { display:flex; gap:13px; }
+    .picker-list { max-height:380px; overflow-y:auto; margin-bottom:16px; }
+    .picker-row { width:100%; display:flex; align-items:center; justify-content:space-between; background:var(--bg-elev-2); border:1px solid var(--border); border-radius:12px; padding:15px 16px; margin-bottom:9px; cursor:pointer; color:var(--accent); text-align:left; }
+    .routine-editor-row { background:var(--bg-elev-2); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:11px; }
+    .routine-editor-row-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:11px; }
+    .routine-editor-inputs { display:grid; grid-template-columns:1fr 1fr 1fr; gap:11px; }
+    .mini-field { display:flex; flex-direction:column; gap:6px; align-items:center; }
+    .mini-field span { font-size:12px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.5px; }
+    .bw-input-row { display:flex; gap:11px; }
+    .bw-input-row .input { margin-bottom:0; }
+    .history-card-header { width:100%; background:none; border:none; color:var(--text); display:flex; align-items:center; justify-content:between; cursor:pointer; padding:0; text-align:left; }
+    .chevron { transition:transform .2s; color:var(--text-dim); flex-shrink:0; }
+    .chevron-open { transform:rotate(180deg); }
+    .history-detail { margin-top:16px; padding-top:16px; border-top:1px solid var(--border); }
+    .history-ex { margin-bottom:14px; }
+    .history-ex-name { font-weight:600; font-size:16px; margin:0 0 9px; }
+    .history-set-row { display:flex; align-items:center; gap:13px; font-size:14px; color:var(--text-dim); padding:5px 0; }
+    .mono { font-family:'IBM Plex Mono',monospace; color:var(--text); font-size:15px; }
+    @media (max-width:380px) {
+      .timer-running .timer-ring-wrap { width:112px; height:112px; }
+      .timer-running .timer-ring-wrap svg { width:112px; height:112px; }
+      .timer-running .timer-clock { font-size:34px; }
+    }
+    @media (min-width:481px) {
+      body { padding:18px 0; }
+      .app-shell { min-height:calc(100vh - 36px); border:1px solid var(--border); border-radius:18px; overflow:hidden; }
+      .bottom-nav { bottom:18px; border-left:1px solid var(--border); border-right:1px solid var(--border); border-bottom:1px solid var(--border); border-radius:0 0 18px 18px; }
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const {useState,useEffect,useMemo}=React;
+const {ResponsiveContainer,LineChart,Line,XAxis,YAxis,CartesianGrid,Tooltip}=Recharts;
+const makeIcon=(symbol)=>(props)=>React.createElement("span",{className:props.className||"",style:{width:props.size||22,height:props.size||22,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:(props.size||22)*0.82,lineHeight:1}},symbol);
+const Dumbbell=makeIcon("🏋🏻");
+const Plus=makeIcon("✚");
+const X=makeIcon("✖");
+const Check=makeIcon("✔");
+const Clock=makeIcon("🕓");
+const TrendingUp=makeIcon("📈");
+const Calendar=makeIcon("📅");
+const Search=makeIcon("🔎");
+const ChevronRight=makeIcon("›");
+const ChevronDown=makeIcon("⌄");
+const Trash2=makeIcon("🗑️");
+const Pencil=makeIcon("✏️");
+const Play=makeIcon("▶");
+const Pause=makeIcon("Ⅱ");
+const RotateCcw=makeIcon("↻");
+const Flame=makeIcon("🔥");
+const Minus=makeIcon("−");
+const ListChecks=makeIcon("📝");
+const Info=makeIcon("ⓘ");
+
+const MUSCLES=["Chest","Back","Shoulders","Biceps","Triceps","Forearms","Core","Quads","Hamstrings","Glutes","Calves","Adductors"];
+const EQUIPMENT=["Barbell","Dumbbell","Machine","Cable","Bodyweight","Band","Plate","EZ-Bar"];
+const uid=(p="id")=>`${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`;
+const slugify=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/(^_|_$)/g,"");
+const seedExercise = (imageUrl, name, muscle, equipment, description = "") => ({
+  id: uid("ex"),
+  name,
+  muscle,
+  equipment,
+  description,
+  imageUrl,
+  custom: false
+});
+
+const DEFAULT_EXERCISES = [
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Incline Barbell Bench Press", "Chest", "Barbell", "Press the weight through a full range of motion until your arms are extended, then lower under control back to the start."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Incline Dumbbell Press", "Chest", "Dumbbell", "Press the weight through a full range of motion until your arms are extended, then lower under control back to the start."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Incline Dumbbell Fly", "Chest", "Dumbbell", "With a slight bend in your elbows, open your arms out in a wide arc until you feel a stretch, then bring them back together with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Low-to-High Cable Crossover", "Chest", "Cable", "With a slight bend in your elbows, open your arms out in a wide arc until you feel a stretch, then bring them back together with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Incline Machine Press", "Chest", "Machine", "Press the weight through a full range of motion until your arms are extended, then lower under control back to the start."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Flat Barbell Bench Press", "Chest", "Barbell", "Press the weight through a full range of motion until your arms are extended, then lower under control back to the start."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Flat Dumbbell Bench Press", "Chest", "Dumbbell", "Press the weight through a full range of motion until your arms are extended, then lower under control back to the start."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Flat Dumbbell Flys", "Chest", "Dumbbell", "With a slight bend in your elbows, open your arms out in a wide arc until you feel a stretch, then bring them back together with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Machine Chest Press (Flat)", "Chest", "Machine", "Press the weight through a full range of motion until your arms are extended, then lower under control back to the start."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Standard Push-ups", "Chest", "Bodyweight", "Keep your body in a straight line from head to heels, lower your chest to the floor by bending your elbows, then push back up."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Chest Press Machine (Converging)", "Chest", "Machine", "Press the weight through a full range of motion until your arms are extended, then lower under control back to the start."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Decline Barbell Bench Press", "Chest", "Barbell", "Press the weight through a full range of motion until your arms are extended, then lower under control back to the start."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Decline Dumbbell Press", "Chest", "Dumbbell", "Press the weight through a full range of motion until your arms are extended, then lower under control back to the start."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Parallel Bar Dips", "Chest", "Bodyweight", "Lower your body by bending your elbows until you feel a stretch, then press back up to full extension."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "High-to-Low Cable Crossover", "Chest", "Cable", "With a slight bend in your elbows, open your arms out in a wide arc until you feel a stretch, then bring them back together with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Seated Chest Dip Machine", "Chest", "Machine", "Lower your body by bending your elbows until you feel a stretch, then press back up to full extension."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Pec Deck / Machine Fly", "Chest", "Machine", "With a slight bend in your elbows, open your arms out in a wide arc until you feel a stretch, then bring them back together with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Cable Crossovers (Mid-level)", "Chest", "Cable", "With a slight bend in your elbows, open your arms out in a wide arc until you feel a stretch, then bring them back together with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Floor Press", "Chest", "Barbell", "Press the weight through a full range of motion until your arms are extended, then lower under control back to the start."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Pullovers (Dumbbell or Barbell)", "Chest", "Dumbbell", "Perform with controlled movement, maintaining good form throughout the entire range of motion."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Pull-ups (Overhand Grip)", "Back", "Bodyweight", "Pull yourself (or the bar) down toward your upper chest by driving your elbows down and back, then extend fully under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Chin-ups (Underhand Grip)", "Back", "Bodyweight", "Pull yourself (or the bar) down toward your upper chest by driving your elbows down and back, then extend fully under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Lat Pulldown (Wide Grip)", "Back", "Cable", "Pull yourself (or the bar) down toward your upper chest by driving your elbows down and back, then extend fully under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Neutral-Grip Lat Pulldown", "Back", "Cable", "Pull yourself (or the bar) down toward your upper chest by driving your elbows down and back, then extend fully under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Single-Arm Cable Pulldown", "Back", "Cable", "Pull yourself (or the bar) down toward your upper chest by driving your elbows down and back, then extend fully under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Barbell Bent-Over Row", "Back", "Barbell", "Pull the weight toward your torso while keeping your torso stable, squeezing your shoulder blades together, then lower with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Pendlay Row", "Back", "Barbell", "Pull the weight toward your torso while keeping your torso stable, squeezing your shoulder blades together, then lower with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Dumbbell Single-Arm Row", "Back", "Dumbbell", "Pull the weight toward your torso while keeping your torso stable, squeezing your shoulder blades together, then lower with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Seated Cable Row", "Back", "Cable", "Pull the weight toward your torso while keeping your torso stable, squeezing your shoulder blades together, then lower with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "T-Bar Row", "Back", "Machine", "Pull the weight toward your torso while keeping your torso stable, squeezing your shoulder blades together, then lower with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Chest-Supported Row (Machine or Incline Bench)", "Back", "Machine", "Pull the weight toward your torso while keeping your torso stable, squeezing your shoulder blades together, then lower with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Straight-Arm Pulldown / Cable Pullover", "Back", "Cable", "Pull yourself (or the bar) down toward your upper chest by driving your elbows down and back, then extend fully under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Underhand (Reverse-Grip) Barbell Row", "Back", "Barbell", "Pull the weight toward your torso while keeping your torso stable, squeezing your shoulder blades together, then lower with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Single-Arm Kneeling Cable Row", "Back", "Cable", "Pull the weight toward your torso while keeping your torso stable, squeezing your shoulder blades together, then lower with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Conventional Deadlift", "Back", "Barbell", "Hinge at the hips with a flat back, keep the bar close, and drive through the floor to stand tall, then lower under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Sumo Deadlift", "Back", "Barbell", "Hinge at the hips with a flat back, keep the bar close, and drive through the floor to stand tall, then lower under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Rack Pulls", "Back", "Barbell", "Hinge at the hips with a flat back, keep the bar close, and drive through the floor to stand tall, then lower under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Back Extensions (Hyperextensions)", "Back", "Bodyweight", "Extend the weight through a full range of motion, feeling the target muscle stretch and contract, then return under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Good Mornings", "Back", "Barbell", "Hinge at the hips with a flat back, keep the bar close, and drive through the floor to stand tall, then lower under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Standing Barbell Overhead Press (Military Press)", "Shoulders", "Barbell", "Press the weight through a full range of motion until your arms are extended, then lower under control back to the start."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Seated Dumbbell Overhead Press", "Shoulders", "Dumbbell", "Press the weight through a full range of motion until your arms are extended, then lower under control back to the start."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Arnold Press", "Shoulders", "Dumbbell", "Press the weight through a full range of motion until your arms are extended, then lower under control back to the start."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Push Press", "Shoulders", "Barbell", "Press the weight through a full range of motion until your arms are extended, then lower under control back to the start."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Machine Shoulder Press", "Shoulders", "Machine", "Press the weight through a full range of motion until your arms are extended, then lower under control back to the start."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Landmine Press", "Shoulders", "Barbell", "Press the weight through a full range of motion until your arms are extended, then lower under control back to the start."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Dumbbell Lateral Raise", "Shoulders", "Dumbbell", "Raise the weight with a slight bend in your joints until it reaches shoulder height, then lower slowly under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Cable Lateral Raise", "Shoulders", "Cable", "Raise the weight with a slight bend in your joints until it reaches shoulder height, then lower slowly under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Machine Lateral Raise", "Shoulders", "Machine", "Raise the weight with a slight bend in your joints until it reaches shoulder height, then lower slowly under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Upright Row (Wide Grip)", "Shoulders", "Barbell", "Pull the weight toward your torso while keeping your torso stable, squeezing your shoulder blades together, then lower with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Dumbbell Front Raise", "Shoulders", "Dumbbell", "Raise the weight with a slight bend in your joints until it reaches shoulder height, then lower slowly under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Plate Front Raise", "Shoulders", "Plate", "Raise the weight with a slight bend in your joints until it reaches shoulder height, then lower slowly under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Cable Front Raise", "Shoulders", "Cable", "Raise the weight with a slight bend in your joints until it reaches shoulder height, then lower slowly under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Face Pulls", "Shoulders", "Cable", "Perform with controlled movement, maintaining good form throughout the entire range of motion."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Reverse Pec Deck Fly", "Shoulders", "Machine", "With a slight bend in your elbows, open your arms out in a wide arc until you feel a stretch, then bring them back together with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Dumbbell Bent-Over Rear Delt Fly", "Shoulders", "Dumbbell", "With a slight bend in your elbows, open your arms out in a wide arc until you feel a stretch, then bring them back together with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Cable Rear Delt Crossover", "Shoulders", "Cable", "With a slight bend in your elbows, open your arms out in a wide arc until you feel a stretch, then bring them back together with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Barbell Bicep Curl", "Biceps", "Barbell", "Keep your elbows steady and curl the weight through a full range of motion, squeezing at the top before lowering under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "EZ-Bar Curl", "Biceps", "EZ-Bar", "Keep your elbows steady and curl the weight through a full range of motion, squeezing at the top before lowering under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Dumbbell Bicep Curl (Standing or Seated)", "Biceps", "Dumbbell", "Keep your elbows steady and curl the weight through a full range of motion, squeezing at the top before lowering under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Hammer Curl", "Biceps", "Dumbbell", "Keep your elbows steady and curl the weight through a full range of motion, squeezing at the top before lowering under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Incline Dumbbell Curl", "Biceps", "Dumbbell", "Keep your elbows steady and curl the weight through a full range of motion, squeezing at the top before lowering under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Preacher Curl", "Biceps", "EZ-Bar", "Keep your elbows steady and curl the weight through a full range of motion, squeezing at the top before lowering under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Concentration Curl", "Biceps", "Dumbbell", "Keep your elbows steady and curl the weight through a full range of motion, squeezing at the top before lowering under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Cable Curl", "Biceps", "Cable", "Keep your elbows steady and curl the weight through a full range of motion, squeezing at the top before lowering under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Close-Grip Bench Press", "Triceps", "Barbell", "Press the weight through a full range of motion until your arms are extended, then lower under control back to the start."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Triceps Pushdowns (Cable - Rope or Straight Bar)", "Triceps", "Cable", "Perform with controlled movement, maintaining good form throughout the entire range of motion."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Overhead Cable Extension", "Triceps", "Cable", "Extend the weight through a full range of motion, feeling the target muscle stretch and contract, then return under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Skull Crushers (Lying Triceps Extension)", "Triceps", "Barbell", "Extend the weight through a full range of motion, feeling the target muscle stretch and contract, then return under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Dumbbell Overhead Triceps Extension", "Triceps", "Dumbbell", "Extend the weight through a full range of motion, feeling the target muscle stretch and contract, then return under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Dips (Parallel Bar or Bench Dips)", "Triceps", "Bodyweight", "Lower your body by bending your elbows until you feel a stretch, then press back up to full extension."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Triceps Kickbacks", "Triceps", "Dumbbell", "Keeping your upper arm still, extend your elbow fully behind you, squeezing the triceps, then return under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Wrist Curls (Palms Up)", "Forearms", "Dumbbell", "Keep your elbows steady and curl the weight through a full range of motion, squeezing at the top before lowering under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Reverse Wrist Curls (Palms Down)", "Forearms", "Dumbbell", "Keep your elbows steady and curl the weight through a full range of motion, squeezing at the top before lowering under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Farmer's Walks", "Forearms", "Dumbbell", "Grip the weights firmly and walk with a tall posture and braced core for the target distance or time."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Plate Pinches", "Forearms", "Plate", "Pinch the plates together firmly between your fingers and thumb and hold for the target duration."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Reverse Barbell Curls", "Forearms", "Barbell", "Keep your elbows steady and curl the weight through a full range of motion, squeezing at the top before lowering under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Forearm Plank", "Core", "Bodyweight", "Hold a braced, straight-line position with your core engaged, breathing steadily, for the target duration."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Long-Arm Plank", "Core", "Bodyweight", "Hold a braced, straight-line position with your core engaged, breathing steadily, for the target duration."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Ab Wheel Rollout", "Core", "Bodyweight", "Perform with controlled movement, maintaining good form throughout the entire range of motion."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Dead Bug", "Core", "Bodyweight", "Lie on your back with arms and knees raised, then slowly extend opposite arm and leg while keeping your lower back pressed to the floor."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Hollow Body Hold", "Core", "Bodyweight", "Lie on your back and brace your core to lift your shoulders and legs slightly off the floor, holding a rigid hollow position."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Cable Crunch", "Core", "Cable", "Curl your torso forward by contracting your abs, pause at the top, then lower back down under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Hanging Leg Raise / Knee Raise", "Core", "Bodyweight", "Hang from a bar with a stable grip and raise your legs or knees toward your chest, then lower slowly without swinging."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Decline Sit-up", "Core", "Bodyweight", "Curl your torso forward by contracting your abs, pause at the top, then lower back down under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Stability Ball Crunch", "Core", "Bodyweight", "Curl your torso forward by contracting your abs, pause at the top, then lower back down under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Pallof Press", "Core", "Cable", "Press the weight through a full range of motion until your arms are extended, then lower under control back to the start."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Bird-Dog", "Core", "Bodyweight", "From a tabletop position, extend opposite arm and leg while keeping your core braced and hips level, then return and switch sides."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Side Plank", "Core", "Bodyweight", "Hold a braced, straight-line position with your core engaged, breathing steadily, for the target duration."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Farmer's Walks (Unilateral / Suitcase Carry)", "Core", "Dumbbell", "Grip the weights firmly and walk with a tall posture and braced core for the target distance or time."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Russian Twist", "Core", "Bodyweight", "Rotate your torso under control from side to side, keeping the movement driven by your core rather than your arms."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Cable Woodchoppers", "Core", "Cable", "Rotate your torso under control from side to side, keeping the movement driven by your core rather than your arms."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Bicycle Crunches", "Core", "Bodyweight", "Curl your torso forward by contracting your abs, pause at the top, then lower back down under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Back Squat (High Bar)", "Quads", "Barbell", "Keep your chest up and core braced as you squat down until your thighs reach depth, then drive through your feet to stand back up."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Front Squat", "Quads", "Barbell", "Keep your chest up and core braced as you squat down until your thighs reach depth, then drive through your feet to stand back up."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Goblet Squat", "Quads", "Dumbbell", "Keep your chest up and core braced as you squat down until your thighs reach depth, then drive through your feet to stand back up."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Safety Bar Squat", "Quads", "Barbell", "Keep your chest up and core braced as you squat down until your thighs reach depth, then drive through your feet to stand back up."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Leg Press (Low Foot Placement)", "Quads", "Machine", "Sit back in the machine and press the platform away by extending your legs, then lower with control until your knees reach a deep bend."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Hack Squat Machine", "Quads", "Machine", "Keep your chest up and core braced as you squat down until your thighs reach depth, then drive through your feet to stand back up."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Pendulum Squat", "Quads", "Machine", "Keep your chest up and core braced as you squat down until your thighs reach depth, then drive through your feet to stand back up."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Smith Machine Squat", "Quads", "Machine", "Keep your chest up and core braced as you squat down until your thighs reach depth, then drive through your feet to stand back up."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Bulgarian Split Squat (Rear-Foot Elevated Split Squat)", "Quads", "Dumbbell", "Keep your chest up and core braced as you squat down until your thighs reach depth, then drive through your feet to stand back up."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Walking Lunges / Reverse Lunges", "Quads", "Dumbbell", "Step through the movement with control, lowering your hips until both knees reach roughly 90 degrees, then push back to the start."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Step-Ups", "Quads", "Dumbbell", "Step through the movement with control, lowering your hips until both knees reach roughly 90 degrees, then push back to the start."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Leg Extension Machine", "Quads", "Machine", "Sit on the machine with the pad against your shins, extend your legs fully, then lower back down under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Sissy Squat", "Quads", "Bodyweight", "Keep your chest up and core braced as you squat down until your thighs reach depth, then drive through your feet to stand back up."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Romanian Deadlift (RDL)", "Hamstrings", "Barbell", "Hinge at the hips with a flat back, keep the bar close, and drive through the floor to stand tall, then lower under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Stiff-Legged Deadlift", "Hamstrings", "Barbell", "Hinge at the hips with a flat back, keep the bar close, and drive through the floor to stand tall, then lower under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Single-Leg Romanian Deadlift", "Hamstrings", "Dumbbell", "Hinge at the hips with a flat back, keep the bar close, and drive through the floor to stand tall, then lower under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Seated Leg Curl Machine", "Hamstrings", "Machine", "Curl your lower legs toward your glutes against resistance, pausing at the top, then lower slowly to a full stretch."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Lying Leg Curl Machine", "Hamstrings", "Machine", "Curl your lower legs toward your glutes against resistance, pausing at the top, then lower slowly to a full stretch."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Standing Single-Leg Curl", "Hamstrings", "Machine", "Curl your lower legs toward your glutes against resistance, pausing at the top, then lower slowly to a full stretch."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Nordic Hamstring Curls (Nordics)", "Hamstrings", "Bodyweight", "Keep your elbows steady and curl the weight through a full range of motion, squeezing at the top before lowering under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Slider Hamstring Curls / Stability Ball Curls", "Hamstrings", "Bodyweight", "Keep your elbows steady and curl the weight through a full range of motion, squeezing at the top before lowering under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Barbell Hip Thrust", "Glutes", "Barbell", "Drive your hips upward by squeezing your glutes until your body forms a straight line from shoulders to knees, then lower with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Glute Bridge (Floor)", "Glutes", "Bodyweight", "Drive your hips upward by squeezing your glutes until your body forms a straight line from shoulders to knees, then lower with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Single-Leg Barbell Hip Thrust", "Glutes", "Barbell", "Drive your hips upward by squeezing your glutes until your body forms a straight line from shoulders to knees, then lower with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Machine Hip Thrust", "Glutes", "Machine", "Drive your hips upward by squeezing your glutes until your body forms a straight line from shoulders to knees, then lower with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Cable Pull-Throughs", "Glutes", "Cable", "Hinge at the hips against the cable's resistance, then drive your hips forward to stand tall, squeezing your glutes at the top."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Low Bar Back Squat", "Glutes", "Barbell", "Keep your chest up and core braced as you squat down until your thighs reach depth, then drive through your feet to stand back up."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Bulgarian Split Squat", "Glutes", "Dumbbell", "Keep your chest up and core braced as you squat down until your thighs reach depth, then drive through your feet to stand back up."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Cable Hip Abduction", "Glutes", "Cable", "Keeping your core braced, move your leg outward against resistance, focusing on the outer glute, then return with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Seated Hip Abduction Machine", "Glutes", "Machine", "Keeping your core braced, move your leg outward against resistance, focusing on the outer glute, then return with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Clamshells (with Band)", "Glutes", "Band", "Keeping your core braced, move your leg outward against resistance, focusing on the outer glute, then return with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Lateral Band Walks", "Glutes", "Band", "With a band around your legs, take controlled lateral steps while keeping tension on the band and hips level."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Fire Hydrants", "Glutes", "Bodyweight", "Keeping your core braced, move your leg outward against resistance, focusing on the outer glute, then return with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Standing Barbell Calf Raise", "Calves", "Barbell", "Raise the weight with a slight bend in your joints until it reaches shoulder height, then lower slowly under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Standing Calf Raise Machine", "Calves", "Machine", "Raise the weight with a slight bend in your joints until it reaches shoulder height, then lower slowly under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Smith Machine Calf Raise", "Calves", "Machine", "Raise the weight with a slight bend in your joints until it reaches shoulder height, then lower slowly under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Single-Leg Dumbbell Calf Raise", "Calves", "Dumbbell", "Raise the weight with a slight bend in your joints until it reaches shoulder height, then lower slowly under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Leg Press Calf Raise", "Calves", "Machine", "Sit back in the machine and press the platform away by extending your legs, then lower with control until your knees reach a deep bend."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Seated Calf Raise Machine", "Calves", "Machine", "Raise the weight with a slight bend in your joints until it reaches shoulder height, then lower slowly under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Seated Dumbbell Calf Raise", "Calves", "Dumbbell", "Raise the weight with a slight bend in your joints until it reaches shoulder height, then lower slowly under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Bent-Knee Leg Press Calf Raise", "Calves", "Machine", "Sit back in the machine and press the platform away by extending your legs, then lower with control until your knees reach a deep bend."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Tibialis Raises (Bodyweight / Heel Walks)", "Calves", "Bodyweight", "Raise the weight with a slight bend in your joints until it reaches shoulder height, then lower slowly under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Cable Tibialis Raise", "Calves", "Cable", "Raise the weight with a slight bend in your joints until it reaches shoulder height, then lower slowly under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Tib Bar Raises", "Calves", "Machine", "Raise the weight with a slight bend in your joints until it reaches shoulder height, then lower slowly under control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Seated Adductor Machine (Leg Adduction Machine)", "Adductors", "Machine", "Keeping your core braced, draw your leg inward against resistance, focusing on the inner thigh, then return with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Standing Cable Adduction", "Adductors", "Cable", "Keeping your core braced, draw your leg inward against resistance, focusing on the inner thigh, then return with control."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Copenhagen Planks", "Adductors", "Bodyweight", "Hold a braced, straight-line position with your core engaged, breathing steadily, for the target duration."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Sumo Squat (Barbell or Goblet)", "Adductors", "Barbell", "Keep your chest up and core braced as you squat down until your thighs reach depth, then drive through your feet to stand back up."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Side Lunges (Cossack Squats)", "Adductors", "Dumbbell", "Keep your chest up and core braced as you squat down until your thighs reach depth, then drive through your feet to stand back up."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Wide-Stance Leg Press", "Adductors", "Machine", "Sit back in the machine and press the platform away by extending your legs, then lower with control until your knees reach a deep bend."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Cossack Squat", "Adductors", "Bodyweight", "Keep your chest up and core braced as you squat down until your thighs reach depth, then drive through your feet to stand back up."],
+    ["https://raw.githubusercontent.com/ButterGumz/symmetrical-sillyness/refs/heads/main/assets/incline_barbell_bench_press.jpg", "Slider Lateral Lunges", "Adductors", "Bodyweight", "Step through the movement with control, lowering your hips until both knees reach roughly 90 degrees, then push back to the start."]
+].map(x => seedExercise(...x));
+const findExId=(list,name)=>list.find(e=>e.name===name)?.id;
+const seedRoutines=exList=>[{id:uid("rt"),name:"Push Day Starter",exercises:[
+{exerciseId:findExId(exList,"Flat Barbell Bench Press"),name:"Flat Barbell Bench Press",targetSets:3,targetReps:8,targetWeight:135},
+{exerciseId:findExId(exList,"Standing Barbell Overhead Press (Military Press)"),name:"Standing Barbell Overhead Press (Military Press)",targetSets:3,targetReps:10,targetWeight:65},
+{exerciseId:findExId(exList,"Triceps Pushdowns (Cable - Rope or Straight Bar)"),name:"Triceps Pushdowns (Cable - Rope or Straight Bar)",targetSets:3,targetReps:12,targetWeight:40}
+]}];
+
+function loadKey(k,f){try{const x=localStorage.getItem(k);return x===null?f:JSON.parse(x)}catch{return f}}
+function saveKey(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
+const fmtDate=ts=>new Date(ts).toLocaleDateString("en-US",{month:"short",day:"numeric"});
+const fmtDateFull=ts=>new Date(ts).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"});
+const fmtDuration=ms=>{const mins=Math.round(ms/60000);return mins<60?`${mins} min`:`${Math.floor(mins/60)}h ${mins%60}m`};
+const fmtClock=secs=>`${Math.floor(secs/60).toString().padStart(2,"0")}:${Math.floor(secs%60).toString().padStart(2,"0")}`;
+
+async function beepThreeTimes() {
+  for (let i = 0; i < 3; i++) {
+    await beep();
+    if (i < 2) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+  }
+}
+
+function beep() {
+  return new Promise(resolve => {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "triangle";
+      osc.frequency.value = 500;
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      gain.gain.setValueAtTime(1.0, ctx.currentTime);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.1);
+
+      osc.onended = () => {
+        ctx.close?.();
+        resolve();
+      };
+    } catch (e) {
+      resolve();
+    }
+  });
+}
+
+function SectionTitle({children,right}){return <div className="section-title-row"><h2 className="section-title">{children}</h2>{right}</div>}
+function EmptyState({icon:Icon,title,sub,action}){return <div className="empty-state"><Icon size={38} strokeWidth={1.5}/><p className="empty-title">{title}</p>{sub&&<p className="empty-sub">{sub}</p>}{action}</div>}
+function MuscleChip({label,active,onClick}){return <button className={`chip${active?" chip-active":""}`} onClick={onClick}>{label}</button>}
+
+function ConfirmationModal({title,message,onConfirm,onClose}){
+  return (
+    <div className="modal-overlay" style={{zIndex:60}} onClick={onClose}>
+      <div className="modal modal-sm" onClick={e=>e.stopPropagation()}>
+        <div className="modal-header">
+          <h3 className="modal-title">{title}</h3>
+        </div>
+        <p style={{color:"var(--text-dim)",fontSize:16,marginBottom:22}}>{message}</p>
+        <div className="modal-btn-row">
+          <button className="btn btn-ghost" style={{flex:1}} onClick={onClose}>Cancel</button>
+          <button className="btn btn-danger" style={{flex:1}} onClick={onConfirm}>Delete</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ExerciseDetailModal({exercise,onClose}){
+ if(!exercise)return null;
+ return <div className="modal-overlay" style={{zIndex:40}} onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}>
+  <div className="modal-header">
+    <h3 className="modal-title">{exercise.name}</h3>
+    <button className="icon-btn" onClick={onClose}><X size={24}/></button>
+  </div>
+  <div style={{margin:"10px 0 20px", display:"flex", justifyContent:"center"}}>
+    <div style={{width:"100%", maxWidth:320, height:220, borderRadius:14, border:"1px solid var(--border)", background:"var(--bg-elev-2)", display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden"}}>
+      {exercise.imageUrl ? (
+        <img src={exercise.imageUrl} alt={exercise.name} style={{width:"100%", height:"100%", objectFit:"contain"}} />
+      ) : (
+        <span style={{fontSize:44}}>🏋️‍♂️</span>
+      )}
+    </div>
+  </div>
+  <div style={{display:"flex", gap:"8px", marginBottom:"16px"}}>
+    <span className="chip">{exercise.muscle}</span>
+    <span className="chip">{exercise.equipment}</span>
+  </div>
+  <label className="field-label">Instructions & Description</label>
+  <p style={{color:"var(--text)", fontSize:"16px", lineHeight:"1.5", background:"var(--bg-elev-2)", padding:"16px", borderRadius:"12px", border:"1px solid var(--border)", marginBottom:"20px"}}>
+    {exercise.description || "Perform with controlled movement, maintaining good form throughout the entire range of motion."}
+  </p>
+  <button className="btn btn-primary full-width" onClick={onClose}>Got It</button>
+ </div></div>
+}
+
+function ExercisePicker({exercises,onSelect,onSelectAllCategory,onClose,onNewExercise,zIndex=20}){
+ const [search,setSearch]=useState(""),[muscle,setMuscle]=useState("All");
+ const filtered=exercises.filter(e=>(muscle==="All"||e.muscle===muscle)&&e.name.toLowerCase().includes(search.toLowerCase()));
+ 
+ const grouped={};
+ filtered.forEach(e=>(grouped[e.muscle]??=[]).push(e));
+
+ return <div className="modal-overlay" style={{zIndex}} onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}>
+  <div className="modal-header"><h3 className="modal-title">Add Exercise</h3><button className="icon-btn" onClick={onClose}><X size={24}/></button></div>
+  <div className="search-row"><input className="input search-input" placeholder="Search exercises" value={search} onChange={e=>setSearch(e.target.value)} autoFocus/></div>
+  <div className="chip-row"><MuscleChip label="All" active={muscle==="All"} onClick={()=>setMuscle("All")}/>{MUSCLES.map(m=><MuscleChip key={m} label={m} active={muscle===m} onClick={()=>setMuscle(m)}/>)}</div>
+  <div className="picker-list">
+    {Object.keys(grouped).length===0&&<EmptyState icon={Search} title="No exercises found" sub="Try a different search or add your own."/>}
+    {Object.entries(grouped).map(([m,list])=>(
+      <div key={m} style={{marginBottom:16}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+          <p className="muscle-group-label" style={{margin:0}}>{m}</p>
+          {onSelectAllCategory&&<button className="btn btn-ghost btn-sm" style={{padding:"4px 10px",minHeight:"32px",fontSize:"12px"}} onClick={()=>onSelectAllCategory(list)}>Add All ({list.length})</button>}
+        </div>
+        {list.map(ex=><button key={ex.id} className="picker-row" onClick={()=>onSelect(ex)}><div><div className="picker-row-name">{ex.name}</div><div className="picker-row-sub">{ex.muscle} · {ex.equipment}</div></div><Plus size={22}/></button>)}
+      </div>
+    ))}
+  </div>
+  <button className="btn btn-ghost full-width" onClick={onNewExercise}><Plus size={20}/> New Custom Exercise</button>
+ </div></div>
+}
+function NewExerciseModal({onSave,onClose,zIndex=30}){
+ const [name,setName]=useState(""),[muscle,setMuscle]=useState(MUSCLES[0]),[equipment,setEquipment]=useState(EQUIPMENT[0]);
+ return <div className="modal-overlay" style={{zIndex}} onClick={onClose}><div className="modal modal-sm" onClick={e=>e.stopPropagation()}>
+  <div className="modal-header"><h3 className="modal-title">New Exercise</h3><button className="icon-btn" onClick={onClose}><X size={24}/></button></div>
+  <label className="field-label">Name</label><input className="input" value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Zercher Squat" autoFocus/>
+  <label className="field-label">Muscle group</label><select className="input" value={muscle} onChange={e=>setMuscle(e.target.value)}>{MUSCLES.map(m=><option key={m}>{m}</option>)}</select>
+  <label className="field-label">Equipment</label><select className="input" value={equipment} onChange={e=>setEquipment(e.target.value)}>{EQUIPMENT.map(eq=><option key={eq}>{eq}</option>)}</select>
+  <button className="btn btn-primary full-width" style={{marginTop:18}} disabled={!name.trim()} onClick={()=>name.trim()&&onSave({id:uid("ex"),name:name.trim(),muscle,equipment,description:"Custom user-defined exercise. Perform with proper form.",custom:true})}>Save Exercise</button>
+ </div></div>
+}
+function RestTimer({duration,setDuration,remaining,setRemaining,running,setRunning,workoutName}){
+ const pct=duration>0?(duration-remaining)/duration:0,r=38,c=2*Math.PI*r;
+ const requestNotifications=()=>{ if("Notification" in window && Notification.permission==="default") Notification.requestPermission(); };
+ return <div className={`timer-widget${running?" timer-running":""}`}>
+ <div className="timer-main">
+   <div className="timer-workout-label">{running?"TIMER":"TIMER"}</div>
+   <div className="timer-ring-wrap"><svg width="92" height="92" viewBox="0 0 92 92"><circle cx="46" cy="46" r={r} className="timer-ring-bg"/><circle cx="46" cy="46" r={r} className="timer-ring-fg" strokeDasharray={c} strokeDashoffset={c*(1-pct)}/></svg><span className="timer-clock">{fmtClock(remaining)}</span></div>
+ </div>
+ <div className="timer-side">
+ <div className="timer-presets">{[60,90,120].map(s=><button key={s} className={`chip${duration===s?" chip-active":""}`} onClick={()=>{setDuration(s);setRemaining(s);setRunning(false)}}>{s}s</button>)}</div>
+ <div className="timer-controls"><button className="icon-btn" onClick={()=>setRemaining(r=>Math.max(0,r-15))}><Minus size={20}/></button><button className="btn btn-primary btn-round" onClick={()=>{requestNotifications();setRunning(r=>!r)}}>{running?<Pause size={22}/>:<Play size={22}/>}</button><button className="icon-btn" onClick={()=>{setRunning(false);setRemaining(duration)}}><RotateCcw size={20}/></button></div>
+ </div></div>
+}
+function SetRow({index,set,onChange,onToggle,onRemove,isPr}){
+ return <div className={`set-row${set.completed?" set-row-done":""}`}><div className="set-num">{String(index+1).padStart(2,"0")}</div>
+ <input className="set-input" type="number" inputMode="decimal" placeholder="lb" value={set.weight} onChange={e=>onChange("weight",e.target.value)}/><span className="set-x">×</span>
+ <input className="set-input" type="text" inputMode="numeric" placeholder="reps" value={set.reps} onChange={e=>onChange("reps",e.target.value)}/>
+ {isPr&&<Flame size={19} className="pr-flame"/>}<button className={`set-check${set.completed?" set-check-done":""}`} onClick={onToggle}><Check size={20}/></button><button className="icon-btn icon-btn-ghost" onClick={onRemove}><X size={18}/></button></div>
+}
+
+function LogTab({activeWorkout,routines,exercises,onStartRoutine,onStartEmpty,onAddExercise,onUpdateSet,onToggleSet,onAddSet,onRemoveSet,onRemoveExercise,onFinish,onDiscardRequest,onShowExerciseInfo,restProps}){
+ if(!activeWorkout)return <div><SectionTitle>Start a Workout</SectionTitle><button className="btn btn-primary full-width" style={{marginBottom:22}} onClick={onStartEmpty}><Plus size={22}/> Start Empty Workout</button>{routines.length===0?<EmptyState icon={Calendar} title="No routines yet" sub="Build one from the Routines tab to start faster next time."/>:<><p className="field-label" style={{marginBottom:11}}>Or pick a routine</p><div className="routine-grid">{routines.map(r=><button key={r.id} className="routine-card" onClick={()=>onStartRoutine(r)}><div className="routine-card-name">{r.name}</div><div className="routine-card-sub">{r.exercises.length} exercise{r.exercises.length!==1?"s":""}</div><ChevronRight size={20} className="routine-card-arrow"/></button>)}</div></>}</div>;
+ const totalSets=activeWorkout.exercises.reduce((n,e)=>n+e.sets.length,0),doneSets=activeWorkout.exercises.reduce((n,e)=>n+e.sets.filter(s=>s.completed).length,0);
+ return <div><div className="workout-header"><div><h2 className="section-title" style={{marginBottom:5}}>{activeWorkout.routineName}</h2><p className="empty-sub">{doneSets}/{totalSets} sets logged</p></div><button className="btn btn-danger-ghost btn-sm" onClick={onDiscardRequest}>Exit</button></div>
+ <RestTimer {...restProps} workoutName={activeWorkout.routineName}/>{activeWorkout.exercises.length===0&&<EmptyState icon={Dumbbell} title="No exercises yet" sub="Add your first exercise to start logging."/>}
+ {activeWorkout.exercises.map((ex,exIdx)=>{const fullEx=exercises.find(e=>e.id===ex.exerciseId);return <div className="card exercise-card" key={exIdx}><div className="exercise-card-header"><span style={{display:"flex",alignItems:"flex-start",gap:6}}><span><span className="exercise-card-name">{ex.name}</span>{fullEx&&<div className="picker-row-sub">{fullEx.muscle} · {fullEx.equipment}</div>}</span><button className="icon-btn icon-btn-ghost" onClick={()=>onShowExerciseInfo(fullEx||{name:ex.name})}><Info size={19}/></button></span><button className="icon-btn icon-btn-ghost" onClick={()=>onRemoveExercise(exIdx)}><Trash2 size={19}/></button></div>
+ {ex.sets.map((set,setIdx)=><SetRow key={setIdx} index={setIdx} set={set} onChange={(f,v)=>onUpdateSet(exIdx,setIdx,f,v)} onToggle={()=>onToggleSet(exIdx,setIdx)} onRemove={()=>onRemoveSet(exIdx,setIdx)}/>)}
+ <button className="btn btn-ghost btn-sm" onClick={()=>onAddSet(exIdx)}><Plus size={18}/> Add Set</button></div>})}
+ <button className="btn btn-ghost full-width" onClick={onAddExercise} style={{marginTop:8}}><Plus size={20}/> Add Exercise</button><button className="btn btn-primary full-width" style={{marginTop:16}} disabled={doneSets===0} onClick={onFinish}>Finish Workout</button></div>
+}
+function RoutinesTab({routines,onNew,onEdit,onStart}){return <div><SectionTitle right={<button className="btn btn-primary btn-sm" onClick={onNew}><Plus size={18}/> New</button>}>Routines</SectionTitle>{routines.length===0?<EmptyState icon={Calendar} title="No routines yet" sub="Create a routine to reuse your favorite workouts."/>:<div className="routine-list">{routines.map(r=><div className="card routine-list-item" key={r.id}><div className="routine-list-main" onClick={()=>onStart(r)}><div className="routine-card-name">{r.name}</div><div className="routine-card-sub">{r.exercises.map(e=>e.name).join(" · ")}</div></div><div className="routine-list-actions"><button className="icon-btn" onClick={()=>onEdit(r)}><Pencil size={19}/></button></div></div>)}</div>}</div>}
+function RoutineEditor({draft,isNew,onChangeName,onAddExercise,onUpdateExercise,onRemoveExercise,onSave,onDelete,onClose}){
+ return <div className="modal-overlay" style={{zIndex:10}} onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}><div className="modal-header"><h3 className="modal-title">{isNew?"New Routine":"Edit Routine"}</h3><button className="icon-btn" onClick={onClose}><X size={24}/></button></div>
+ <label className="field-label">Routine name</label><input className="input" value={draft.name} onChange={e=>onChangeName(e.target.value)} placeholder="e.g. Leg Day" autoFocus/><label className="field-label" style={{marginTop:18}}>Exercises</label>
+ <div className="picker-list" style={{maxHeight:320}}>{draft.exercises.length===0&&<EmptyState icon={Dumbbell} title="No exercises added"/>}{draft.exercises.map((re,idx)=><div className="routine-editor-row" key={idx}><div className="routine-editor-row-top"><span className="picker-row-name">{re.name}</span><button className="icon-btn icon-btn-ghost" onClick={()=>onRemoveExercise(idx)}><X size={18}/></button></div><div className="routine-editor-inputs">{[["Sets","targetSets"],["Reps","targetReps"],["Weight (lb)","targetWeight"]].map(([lab,field])=><div className="mini-field" key={field}><span>{lab}</span><input className="input input-mini" type={field==="targetReps"?"text":"number"} inputMode={field==="targetReps"?"numeric":"decimal"} value={re[field]} onChange={e=>onUpdateExercise(idx,field,field==="targetWeight"?e.target.value:(field==="targetReps"?e.target.value:Number(e.target.value)))}/></div >)}</div></div>)}</div>
+ <button className="btn btn-ghost full-width" onClick={onAddExercise}><Plus size={20}/> Add Exercise</button><div className="modal-btn-row" style={{marginTop:20}}>{!isNew&&<button className="btn btn-danger" onClick={onDelete}>Delete</button>}<button className="btn btn-primary" style={{flex:1}} disabled={!draft.name.trim()||draft.exercises.length===0} onClick={onSave}>Save Routine</button></div>
+ </div></div>
+}
+function ExercisesTab({exercises,onNewExercise,onSelectExercise}){
+ const [search,setSearch]=useState(""),[muscle,setMuscle]=useState("All");
+ const filtered=exercises.filter(e=>(muscle==="All"||e.muscle===muscle)&&e.name.toLowerCase().includes(search.toLowerCase())),grouped={};
+ filtered.forEach(e=>(grouped[e.muscle]??=[]).push(e));
+ return <div><SectionTitle right={<button className="btn btn-primary btn-sm" onClick={onNewExercise}><Plus size={18}/> New</button>}>Exercise Library</SectionTitle><div className="search-row"><input className="input search-input" placeholder="Search exercises" value={search} onChange={e=>setSearch(e.target.value)}/></div><div className="chip-row"><MuscleChip label="All" active={muscle==="All"} onClick={()=>setMuscle("All")}/>{MUSCLES.map(m=><MuscleChip key={m} label={m} active={muscle===m} onClick={()=>setMuscle(m)}/>)}</div>{!Object.keys(grouped).length&&<EmptyState icon={Search} title="No exercises found"/>}{Object.entries(grouped).map(([m,list])=><div key={m} style={{marginBottom:22}}><p className="muscle-group-label">{m}</p>{list.map(ex=><div className="card exercise-row" key={ex.id} onClick={()=>onSelectExercise(ex)} style={{cursor:"pointer"}}><div><div className="picker-row-name">{ex.name}</div><div className="picker-row-sub">{ex.equipment}{ex.custom?" · Custom":""}</div></div><ChevronRight size={20} style={{color:"var(--text-dim)"}}/></div>)}</div>)}</div>
+}
+function ProgressTab({bwInput,setBwInput,onLogBw,bwChartData,exercisesWithHistory,progressExId,setProgressExId,progressData,onDeleteBw}){
+ return <div>
+   <SectionTitle>Progress</SectionTitle>
+   <div className="card">
+     <p className="field-label">Body Weight</p>
+     <div className="bw-input-row">
+       <input className="input" type="number" inputMode="decimal" placeholder="175" value={bwInput} onChange={e=>setBwInput(e.target.value)}/>
+       <button className="btn btn-primary" onClick={onLogBw}>Log BW</button>
+     </div>
+     {bwChartData.length>0&&<div style={{marginTop:18,height:160}}><ResponsiveContainer width="100%" height="100%"><LineChart data={bwChartData}><CartesianGrid strokeDasharray="3 3" stroke="#33311F"/><XAxis dataKey="date" stroke="#A39C8A" fontSize={12}/><YAxis stroke="#A39C8A" fontSize={12} domain={['dataMin - 5', 'dataMax + 5']}/><Tooltip contentStyle={{background:"#1F1E18",border:"1px solid #33311F",borderRadius:12}} labelStyle={{color:"#FAF7EE"}}/><Line type="monotone" dataKey="weight" stroke="#E8B923" strokeWidth={2.5} dot={false}/></LineChart></ResponsiveContainer></div>}
+     {bwChartData.length>0 && (
+       <div style={{marginTop:14, display:"flex", justifyContent:"flex-end"}}>
+         <button className="btn btn-danger-ghost btn-sm" onClick={onDeleteBw}><Trash2 size={16}/> Delete Latest Weight Entry</button>
+       </div>
+     )}
+   </div>
+   <SectionTitle>Exercise Progress</SectionTitle>
+   {exercisesWithHistory.length===0?<EmptyState icon={TrendingUp} title="No workout history yet" sub="Finish a workout with weight/reps to see your progression charts."/>:<>
+   <select className="input" value={progressExId} onChange={e=>setProgressExId(e.target.value)}>{exercisesWithHistory.map(ex=><option key={ex.id} value={ex.id}>{ex.name}</option>)}</select>
+   {progressData.length>0&&<div className="card" style={{marginTop:16}}><p className="field-label">Estimated 1RM / Max Weight</p><div style={{height:200,marginTop:11}}><ResponsiveContainer width="100%" height="100%"><LineChart data={progressData}><CartesianGrid strokeDasharray="3 3" stroke="#33311F"/><XAxis dataKey="date" stroke="#A39C8A" fontSize={12}/><YAxis stroke="#A39C8A" fontSize={12}/><Tooltip contentStyle={{background:"#1F1E18",border:"1px solid #33311F",borderRadius:12}} labelStyle={{color:"#FAF7EE"}}/><Line type="monotone" dataKey="weight" name="Max Weight" stroke="#E8B923" strokeWidth={2.5}/></LineChart></ResponsiveContainer></div></div>}
+   </>}
+ </div>
+}
+function HistoryTab({history,onDeleteHistory}){
+ const [openId,setOpenId]=useState(null);
+ return <div>
+   <SectionTitle>History</SectionTitle>
+   {history.length===0?<EmptyState icon={Calendar} title="No completed workouts" sub="Completed workouts will appear here."/>:history.map(item=>{
+    const isOpen=openId===item.id;
+    return <div className="card" key={item.id}>
+      <div style={{display:"flex", alignItems:"center", justifyContent:"space-between"}}>
+        <button className="history-card-header" style={{flex:1}} onClick={()=>setOpenId(isOpen?null:item.id)}>
+          <div>
+            <div className="routine-card-name">{item.routineName}</div>
+            <div className="routine-card-sub">{fmtDateFull(item.date)} · {fmtDuration(item.duration)}</div>
+          </div>
+        </button>
+        <div style={{display:"flex", alignItems:"center", gap:8}}>
+          <button className="icon-btn icon-btn-ghost" title="Delete History Entry" onClick={(e)=>{e.stopPropagation();onDeleteHistory(item.id);}}><Trash2 size={19}/></button>
+          <ChevronRight size={22} className={`chevron${isOpen?" chevron-open":""}`} style={{cursor:"pointer"}} onClick={()=>setOpenId(isOpen?null:item.id)}/>
+        </div>
+      </div>
+      {isOpen&&<div className="history-detail">{item.exercises.map((ex,i)=><div className="history-ex" key={i}><p className="history-ex-name">{ex.name}</p>{ex.sets.filter(s=>s.completed).map((s,si)=><div className="history-set-row" key={si}><span>Set {si+1}</span><span className="mono">{s.weight} lb × {s.reps} reps</span></div>)}</div>)}</div>}
+    </div>
+   })}
+ </div>
+}
+
+function App(){
+ const [booted,setBooted]=useState(false);
+ const [exercises,setExercises]=useState(()=>loadKey("il_exs_v2", DEFAULT_EXERCISES));
+ const [routines,setRoutines]=useState(()=>loadKey("il_rts_v2",seedRoutines(DEFAULT_EXERCISES)));
+ const [history,setHistory]=useState(()=>loadKey("il_hist",[]));
+ const [bodyweight,setBodyweight]=useState(()=>loadKey("il_bw",[]));
+ const [tab,setTab]=useState("log");
+ const [activeWorkout,setActiveWorkout]=useState(()=>loadKey("il_active",null));
+ const [restDuration,setRestDuration]=useState(90);
+ const [restRemaining,setRestRemaining]=useState(90);
+ const [restRunning,setRestRunning]=useState(false);
+ const [pickerOpen,setPickerOpen]=useState(false);
+ const [pickerContext,setPickerContext]=useState(null);
+ const [newExOpen,setNewExOpen]=useState(false);
+ const [routineEditor,setRoutineEditor]=useState(null);
+ const [discardModal,setDiscardModal]=useState(false);
+ const [bwInput,setBwInput]=useState("");
+ const [progressExId,setProgressExId]=useState("");
+ const [selectedExerciseModal,setSelectedExerciseModal]=useState(null);
+
+ // Deletion confirmation modal states
+ const [confirmModalConfig, setConfirmModalConfig] = useState(null);
+
+ useEffect(()=>{setBooted(true)},[]);
+ useEffect(()=>{saveKey("il_exs_v2",exercises)},[exercises]);
+ useEffect(()=>{saveKey("il_rts_v2",routines)},[routines]);
+ useEffect(()=>{saveKey("il_hist",history)},[history]);
+ useEffect(()=>{saveKey("il_bw",bodyweight)},[bodyweight]);
+ useEffect(()=>{saveKey("il_active",activeWorkout)},[activeWorkout]);
+
+ useEffect(()=>{
+  let t;
+  if(restRunning&&restRemaining>0){t=setInterval(()=>setRestRemaining(r=>Math.max(0,r-1)),1000)}
+  else if(restRunning&&restRemaining===0){setRestRunning(false);beepThreeTimes();}
+  return ()=>clearInterval(t);
+ },[restRunning,restRemaining]);
+
+ const exercisesWithHistory=useMemo(()=>{
+  const setIds=new Set();
+  history.forEach(h=>h.exercises.forEach(e=>e.sets.some(s=>s.completed)&&setIds.add(e.exerciseId)));
+  return exercises.filter(e=>setIds.has(e.id));
+ },[exercises,history]);
+
+ useEffect(()=>{
+  if(!progressExId&&exercisesWithHistory.length>0)setProgressExId(exercisesWithHistory[0].id);
+ },[exercisesWithHistory,progressExId]);
+
+ const progressData=useMemo(()=>{
+  if(!progressExId)return [];
+  const points=[];
+  history.forEach(h=>{
+   h.exercises.forEach(ex=>{
+    if(ex.exerciseId===progressExId){
+     const maxW=Math.max(0,...ex.sets.filter(s=>s.completed).map(s=>Number(s.weight)||0));
+     if(maxW>0)points.push({date:fmtDate(h.date),weight:maxW});
+    }
+   });
+  });
+  return points;
+ },[history,progressExId]);
+
+ const bwChartData=useMemo(()=>bodyweight.map(b=>({date:fmtDate(b.date),weight:b.weight})),[bodyweight]);
+
+ const startEmptyWorkout=()=>{
+  setActiveWorkout({id:uid("wk"),routineName:"Free Workout",startTime:Date.now(),exercises:[]});
+ };
+ const startRoutineWorkout=r=>{
+  setActiveWorkout({id:uid("wk"),routineName:r.name,startTime:Date.now(),exercises:r.exercises.map(e=>({exerciseId:e.exerciseId,name:e.name,sets:Array.from({length:e.targetSets},()=>({weight:e.targetWeight||"",reps:e.targetReps||"",completed:false}))}))});
+ };
+
+ if(!booted)return <div className="boot-screen"><div className="boot-icon"><Dumbbell size={44}/></div></div>;
+
+ return <div className="app-shell">
+ <header className="app-header"><div className="app-header-inner"><Dumbbell size={26} className="header-icon"/><span className="app-title">IRON CORE</span></div></header>
+ <div className="content">
+  {tab==="log"&&<LogTab activeWorkout={activeWorkout} routines={routines} exercises={exercises} onShowExerciseInfo={ex=>setSelectedExerciseModal(ex)} onStartRoutine={startRoutineWorkout} onStartEmpty={startEmptyWorkout} onAddExercise={()=>{setPickerContext("workout");setPickerOpen(true)}} onUpdateSet={(exIdx,setIdx,f,v)=>{setActiveWorkout(w=>{const next={...w,exercises:[...w.exercises]};next.exercises[exIdx]={...next.exercises[exIdx],sets:[...next.exercises[exIdx].sets]};next.exercises[exIdx].sets[setIdx]={...next.exercises[exIdx].sets[setIdx],[f]:v};return next})}} onToggleSet={(exIdx,setIdx)=>{setActiveWorkout(w=>{const next={...w,exercises:[...w.exercises]};next.exercises[exIdx]={...next.exercises[exIdx],sets:[...next.exercises[exIdx].sets]};const c=!next.exercises[exIdx].sets[setIdx].completed;next.exercises[exIdx].sets[setIdx]={...next.exercises[exIdx].sets[setIdx],completed:c};return next});setRestRemaining(restDuration);setRestRunning(true)}} onAddSet={exIdx=>{setActiveWorkout(w=>{const next={...w,exercises:[...w.exercises]};const sets=next.exercises[exIdx].sets;const last=sets[sets.length-1];next.exercises[exIdx]={...next.exercises[exIdx],sets:[...sets,{weight:last?last.weight:"",reps:last?last.reps:"",completed:false}]};return next})}} onRemoveSet={(exIdx,setIdx)=>{setActiveWorkout(w=>{const next={...w,exercises:[...w.exercises]};next.exercises[exIdx]={...next.exercises[exIdx],sets:next.exercises[exIdx].sets.filter((_,i)=>i!==setIdx)};return next})}} onRemoveExercise={exIdx=>{setActiveWorkout(w=>({...w,exercises:w.exercises.filter((_,i)=>i!==exIdx)}))}} onFinish={()=>{if(!activeWorkout)return;setHistory(h=>[{...activeWorkout,id:uid("hist"),duration:Date.now()-activeWorkout.startTime,date:Date.now()},...h]);setActiveWorkout(null);setRestRunning(false);setTab("history")}} onDiscardRequest={()=>setDiscardModal(true)} restProps={{duration:restDuration,setDuration:setRestDuration,remaining:restRemaining,setRemaining:setRestRemaining,running:restRunning,setRunning:setRestRunning}}/>}
+  {tab==="routines"&&<RoutinesTab routines={routines} onNew={()=>setRoutineEditor({id:uid("rt"),name:"",exercises:[],isNew:true})} onEdit={r=>setRoutineEditor({...r,isNew:false})} onStart={r=>{startRoutineWorkout(r);setTab("log")}}/>}
+  {tab==="exercises"&&<ExercisesTab exercises={exercises} onNewExercise={()=>setNewExOpen(true)} onSelectExercise={ex=>setSelectedExerciseModal(ex)}/>}
+  {tab==="progress"&&<ProgressTab bwInput={bwInput} setBwInput={setBwInput} onLogBw={()=>{const w=Number(bwInput);if(w>0){setBodyweight(b=>[...b,{date:Date.now(),weight:w}]);setBwInput("")}}} bwChartData={bwChartData} exercisesWithHistory={exercisesWithHistory} progressExId={progressExId} setProgressExId={setProgressExId} progressData={progressData} onDeleteBw={()=>{
+    setConfirmModalConfig({
+      title: "Delete Body Weight Entry?",
+      message: "Are you sure you want to delete your most recent body weight log entry?",
+      onConfirm: () => {
+        setBodyweight(b => b.slice(0, -1));
+        setConfirmModalConfig(null);
+      }
+    });
+  }}/>}
+  {tab==="history"&&<HistoryTab history={history} onDeleteHistory={id=>{
+    setConfirmModalConfig({
+      title: "Delete Workout History?",
+      message: "Are you sure you want to delete this completed workout from your history?",
+      onConfirm: () => {
+        setHistory(h => h.filter(item => item.id !== id));
+        setConfirmModalConfig(null);
+      }
+    });
+  }}/>}
+ </div>
+ <nav className="bottom-nav">
+  {[
+    ["log","Start",Dumbbell],
+    ["routines","Routines",ListChecks],
+    ["exercises","Exercises",Search],
+    ["progress","Progress",TrendingUp],
+    ["history","History",Calendar]
+  ].map(([id,label,Icon])=>(
+    <button key={id} className={`nav-btn${tab===id?" nav-btn-active":""}`} onClick={()=>setTab(id)}>
+      <Icon size={id === "exercises" ? 30 : 24}/>
+      <span>{label}</span>
+    </button>
+  ))}
+ </nav>
+ {pickerOpen&&<ExercisePicker exercises={exercises} zIndex={40} onSelect={ex=>{
+   if(pickerContext==="workout"){
+     setActiveWorkout(w=>({...w,exercises:[...w.exercises,{exerciseId:ex.id,name:ex.name,sets:[{weight:"",reps:"",completed:false}]}]}))
+   }else if(pickerContext==="routine"&&routineEditor){
+     setRoutineEditor(re=>({...re,exercises:[...re.exercises,{exerciseId:ex.id,name:ex.name,targetSets:3,targetReps:10,targetWeight:0}]}))
+   }
+   setPickerOpen(false);
+ }} onSelectAllCategory={list=>{
+   if(pickerContext==="workout"){
+     setActiveWorkout(w=>({
+       ...w,
+       exercises:[...w.exercises, ...list.map(ex => ({exerciseId:ex.id, name:ex.name, sets:[{weight:"",reps:"",completed:false}]}))]
+     }))
+   }else if(pickerContext==="routine"&&routineEditor){
+     setRoutineEditor(re=>({
+       ...re,
+       exercises:[...re.exercises, ...list.map(ex => ({exerciseId:ex.id, name:ex.name, targetSets:3, targetReps:10, targetWeight:0}))]
+     }))
+   }
+   setPickerOpen(false);
+ }} onClose={()=>setPickerOpen(false)} onNewExercise={()=>{setNewExOpen(true)}}/>}
+ {newExOpen&&<NewExerciseModal zIndex={50} onSave={ex=>{setExercises(e=>[...e,ex]);setNewExOpen(false)}} onClose={()=>setNewExOpen(false)}/>}
+ {routineEditor&&<RoutineEditor draft={routineEditor} isNew={routineEditor.isNew} onChangeName={name=>setRoutineEditor(re=>({...re,name}))} onAddExercise={()=>{setPickerContext("routine");setPickerOpen(true)}} onUpdateExercise={(idx,f,v)=>setRoutineEditor(re=>{const next={...re,exercises:[...re.exercises]};next.exercises[idx]={...next.exercises[idx],[f]:v};return next})} onRemoveExercise={idx=>setRoutineEditor(re=>({...re,exercises:re.exercises.filter((_,i)=>i!==idx)}))} onSave={()=>{if(routineEditor.isNew){setRoutines(r=>[...r,{...routineEditor,id:uid("rt")}])}else{setRoutines(r=>r.map(item=>item.id===routineEditor.id?routineEditor:item))}setRoutineEditor(null)}} onDelete={()=>{
+   setConfirmModalConfig({
+     title: "Delete Routine?",
+     message: "Are you sure you want to delete this routine? This action cannot be undone.",
+     onConfirm: () => {
+       setRoutines(r=>r.filter(item=>item.id!==routineEditor.id));
+       setRoutineEditor(null);
+       setConfirmModalConfig(null);
+     }
+   });
+ }} onClose={()=>setRoutineEditor(null)}/>}
+ {discardModal&&<div className="modal-overlay" style={{zIndex:20}} onClick={()=>setDiscardModal(false)}><div className="modal modal-sm" onClick={e=>e.stopPropagation()}><div className="modal-header"><h3 className="modal-title">Exit Workout?</h3></div><p style={{color:"var(--text-dim)",fontSize:16,marginBottom:22}}>Are you sure you want to exit this workout? All progress will be lost.</p><div className="modal-btn-row"><button className="btn btn-ghost" style={{flex:1}} onClick={()=>setDiscardModal(false)}>Cancel</button><button className="btn btn-danger" style={{flex:1}} onClick={()=>{setActiveWorkout(null);setRestRunning(false);setDiscardModal(false)}}>Exit</button></div></div></div>}
+ {selectedExerciseModal&&<ExerciseDetailModal exercise={selectedExerciseModal} onClose={()=>setSelectedExerciseModal(null)}/>}
+ {confirmModalConfig&&<ConfirmationModal title={confirmModalConfig.title} message={confirmModalConfig.message} onConfirm={confirmModalConfig.onConfirm} onClose={()=>setConfirmModalConfig(null)}/>}
+ </div>;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
